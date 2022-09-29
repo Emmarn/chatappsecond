@@ -5,15 +5,27 @@ const io = socket();
 
 let sockets = [];
 
-const server = net.createServer(socket => {
-
-    sockets.push(socket);
+const readLine = require('readline').createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+       //användaren väljer vilken port servern ska ansluta till
+let choosenPort = new Promise(resolve => {
+    readLine.question('Ange vilken port du vill starta din server på: ', port => {
+        resolve(port)
+    })
+})
+        
+    choosenPort.then((port) => {
+        const server = net.createServer(socket => {
+            sockets.push(socket);
     console.log('En användare anslöt sig.');
     
     socket.on('data', data => {
         broadcast(data, socket);
-    });
-
+        })
+    
+    
     socket.on('error', err => {
         console.log('En användare förlorade anslutningen.');
     });
@@ -23,14 +35,10 @@ const server = net.createServer(socket => {
     });
 
 });
-
-server.listen(3000);
-io.on("connection", (socket) => {
-    socket.join("room");
-  });
-
-  io.to("room1").emit("event");
-
+    
+server.listen(port, 3000, () => {
+    console.log('Servern öppnades på port: ' + port)  // felmeddelanden om man försöker öppna på annat än 3000?
+});
 
 function broadcast(message, socketSent) {
     if (message === 'quit') {
@@ -41,4 +49,4 @@ function broadcast(message, socketSent) {
             if (socket !== socketSent) socket.write(message);
         });
     }
-}
+}})
